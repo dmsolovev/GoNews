@@ -3,6 +3,7 @@ package api
 import (
 	"GoNews/pkg/storage"
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -45,6 +46,7 @@ func (api *API) postsHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	fmt.Println(posts)
 	bytes, err := json.Marshal(posts)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -61,6 +63,7 @@ func (api *API) addPostHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	fmt.Println(p)
 	err = api.db.AddPost(p)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
