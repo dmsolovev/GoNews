@@ -2,11 +2,14 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 
 	"GoNews/pkg/api"
 	"GoNews/pkg/storage"
-	"GoNews/pkg/storage/memdb"
+
+	// postgres "GoNews/pkg/storage/postgresql"
+	mongodb "GoNews/pkg/storage/mongodb"
 )
 
 // Сервер go.
@@ -20,35 +23,37 @@ func main() {
 	var srv server
 
 	// Создаём объекты баз данных.
-	//
-	// БД в памяти.
-	db := memdb.New()
-	fmt.Println("DB in memory")
-	/*
-		// Реляционная БД PostgreSQL.
-		db2, err := postgres.New("postgres://postgres:postgres@server.domain/posts")
-		if err != nil {
-			log.Fatal(err)
-		}
-		// Документная БД MongoDB.
-		db3, err := mongo.New("mongodb://server.domain:27017/")
-		if err != nil {
-			log.Fatal(err)
-		}
-		_, _ = db2, db3
-	*/
 
-	// Инициализируем хранилище сервера конкретной БД.
-	srv.db = db
+	// БД в памяти
+	// db := memdb.New()
+	// fmt.Println("In-memory DB initialized")
+
+	// PostgreSQL
+	// pgDB, err := postgres.New("postgres://postgres:1@localhost:5432/GoNews?sslmode=disable")
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// fmt.Println("PostgreSQL DB initialized")
+
+	// MongoDB
+	mongoDB, err := mongodb.New("mongodb://localhost:27017")
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("MongoDB initialized")
+
+	// Выбираем какую БД использовать
+	// Можно раскомментировать нужную строку:
+	//srv.db = db // Использовать in-memory БД
+	// srv.db = pgDB // Использовать PostgreSQL
+	srv.db = mongoDB // Использовать MongoDB
 
 	// Создаём объект API и регистрируем обработчики.
 	srv.api = api.New(srv.db)
-	fmt.Println("DB in memory")
 
-	// Запускаем веб-сервер на порту 8080 на всех интерфейсах.
-	// Предаём серверу маршрутизатор запросов,
-	// поэтому сервер будет все запросы отправлять на маршрутизатор.
-	// Маршрутизатор будет выбирать нужный обработчик.
-	http.ListenAndServe(":8080", srv.api.Router())
-	fmt.Println("Я запустилься!")
+	// Запускаем веб-сервер
+	if err := http.ListenAndServe(":8080", srv.api.Router()); err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Starting server on :8080")
 }
